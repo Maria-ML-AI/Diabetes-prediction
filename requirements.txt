@@ -1,0 +1,9 @@
+python-telegram-bot==20.0b0
+logging
+telegram
+telegram.ext 
+joblib 
+numpy 
+pandas 
+sklearn.preprocessing 
+sklearn.cluster 
