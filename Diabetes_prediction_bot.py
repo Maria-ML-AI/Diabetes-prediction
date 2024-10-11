@@ -6,17 +6,16 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-import xgboost as xgb  # добавлено для работы с XGBoost
+import xgboost as xgb
 
 # Налаштування для 20 фічей, які ти будеш запитувати у користувача
 FEATURES = ['HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker',
        'Stroke', 'HeartDiseaseorAttack', 'PhysActivity', 'Fruits', 'Veggies',
        'HvyAlcoholConsump', 'AnyHealthcare', 'NoDocbcCost', 'GenHlth',
        'MentHlth', 'PhysHlth', 'DiffWalk', 'Sex', 'Age', 'Education',
-       'Income']  
+       'Income']
 
 # Завантажуємо модель XGBoost
-# Используем xgboost.Booster для загрузки модели, если она была сохранена через XGBoost
 try:
     model = xgb.Booster()
     model.load_model('model_diabetes.pkl')  # Загрузка модели напрямую через XGBoost
@@ -27,7 +26,7 @@ except:
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 # Стадії для запиту фічей
-ASKING_FEATURES = range(len(FEATURES))
+ASKING_FEATURES = 1
 
 # Глобальный словарь для хранения данных пользователя
 user_data = {}
@@ -106,7 +105,6 @@ def ask_feature(update: Update, context: CallbackContext) -> int:
         elif feature_name == 'Income':
             update.message.reply_text("Введи рівень доходу від 1 до 8:")
         
-
         return ASKING_FEATURES
     else:
         return make_prediction(update, context)
@@ -122,7 +120,7 @@ def collect_data(update: Update, context: CallbackContext) -> int:
         return ASKING_FEATURES
     
     user_data[chat_id].append(value)
-    return ask_feature(update, context)
+    return ask_feature(update, context)  # Возвращаем ask_feature для перехода к следующему вопросу
 
 def feature_engineering(df):
     # Використовуємо KMeans для створення нових кластерів
@@ -177,7 +175,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main():
-    updater = Updater("7882573984:AAEcB89h7V3uvSh9Kam6hltFkH0KTpicfZg", use_context=True)  
+    updater = Updater("YOUR_BOT_API_TOKEN", use_context=True)  # Замініть на токен вашого бота
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
