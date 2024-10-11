@@ -1,11 +1,12 @@
 import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, ConversationHandler
-import joblib 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+import xgboost as xgb  # добавлено для работы с XGBoost
 
 # Налаштування для 20 фічей, які ти будеш запитувати у користувача
 FEATURES = ['HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker',
@@ -14,8 +15,13 @@ FEATURES = ['HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker',
        'MentHlth', 'PhysHlth', 'DiffWalk', 'Sex', 'Age', 'Education',
        'Income']  
 
-# Завантажуємо модель
-model = joblib.load('model_diabetes.pkl') 
+# Завантажуємо модель XGBoost
+# Используем xgboost.Booster для загрузки модели, если она была сохранена через XGBoost
+try:
+    model = xgb.Booster()
+    model.load_model('model_diabetes.pkl')  # Загрузка модели напрямую через XGBoost
+except:
+    model = joblib.load('model_diabetes.pkl')  # Загрузка через joblib для других моделей
 
 # Логи для відстеження
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -23,13 +29,19 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 # Стадії для запиту фічей
 ASKING_FEATURES = range(len(FEATURES))
 
+# Глобальный словарь для хранения данных пользователя
+user_data = {}
+
 # Стартова команда
 def start(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
+    user_data[chat_id] = []  # Инициализируем пустой список для пользователя
     update.message.reply_text("Привіт! Я допоможу передбачити наявність діабету. Дай відповідь на кілька питань.")
-    user_data[update.message.chat_id] = []
-    return ASKING_FEATURES
+    return ask_feature(update, context)
+
 def ask_feature(update: Update, context: CallbackContext) -> int:
-    current_feature = len(user_data[update.message.chat_id])
+    chat_id = update.message.chat_id
+    current_feature = len(user_data[chat_id])
     
     if current_feature < len(FEATURES):
         feature_name = FEATURES[current_feature]
@@ -41,7 +53,7 @@ def ask_feature(update: Update, context: CallbackContext) -> int:
             update.message.reply_text("Введи свій вік:")
         
         elif feature_name == 'HighBP':
-            update.message.reply_text("Наявність гіпертонії (0 - немає, 1 - є:")
+            update.message.reply_text("Наявність гіпертонії (0 - немає, 1 - є):")
         
         elif feature_name == 'CholCheck':
             update.message.reply_text("Чи робився аналіз крові на холестерин за останні 5 років(0 - ні, 1 - так):")
@@ -77,7 +89,7 @@ def ask_feature(update: Update, context: CallbackContext) -> int:
             update.message.reply_text("Оцінка загального здоров'я на основі шкали від 1 (відмінне) до 5 (погане):")
         
         elif feature_name == 'MentHlth':
-            update.message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник).:")
+            update.message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник):")
         
         elif feature_name == 'PhysHlth':
             update.message.reply_text("Кількість днів за останній місяць, коли фізичне здоров'я було поганим (числовий показник):")
@@ -99,9 +111,9 @@ def ask_feature(update: Update, context: CallbackContext) -> int:
     else:
         return make_prediction(update, context)
 
-
 # Збір даних від користувача
 def collect_data(update: Update, context: CallbackContext) -> int:
+    chat_id = update.message.chat_id
     value = update.message.text
     try:
         value = float(value)
@@ -109,13 +121,13 @@ def collect_data(update: Update, context: CallbackContext) -> int:
         update.message.reply_text("Будь ласка, введи числове значення.")
         return ASKING_FEATURES
     
-    user_data[update.message.chat_id].append(value)
+    user_data[chat_id].append(value)
     return ask_feature(update, context)
 
 def feature_engineering(df):
     # Використовуємо KMeans для створення нових кластерів
     kmeans = KMeans(n_clusters=3, random_state=42)
-    df['KMeans_Cluster'] = kmeans.fit_predict(df[['Age', 'BMI', 'Income']])
+    df['KMeans_Cluster'] = kmeans.fit_predict(df[['Age', 'Income']])
 
     # Перетворення кластерів на категорійні фічі
     df = pd.get_dummies(df, columns=['KMeans_Cluster'], drop_first=True)
@@ -141,7 +153,9 @@ def feature_engineering(df):
 
 # Передбачення результату
 def make_prediction(update: Update, context: CallbackContext) -> int:
-    user_features = user_data[update.message.chat_id]
+    chat_id = update.message.chat_id
+    user_features = user_data[chat_id]
+    
     # Преобразуємо дані як необхідно для твоєї моделі (включаючи feature engineering)
     features_df = pd.DataFrame([user_features], columns=FEATURES)
         
@@ -149,11 +163,12 @@ def make_prediction(update: Update, context: CallbackContext) -> int:
     features_df = feature_engineering(features_df)
     
     # Передбачаємо результат
-    prediction = model.predict(features_df)
+    prediction = model.predict(xgb.DMatrix(features_df))  # Прогноз через XGBoost
+
     update.message.reply_text(f"Ймовірність наявності діабету: {prediction[0]}")
     
     # Очищуємо дані користувача після передбачення
-    user_data.pop(update.message.chat_id, None)
+    user_data.pop(chat_id, None)
     return ConversationHandler.END
 
 # Обробка помилок
@@ -162,7 +177,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main():
-    updater = Updater("7882573984:AAEcB89h7V3uvSh9Kam6hltFkH0KTpicfZg", use_context=True)  # Замініть на токен вашого бота
+    updater = Updater("YOUR_BOT_API_TOKEN", use_context=True)  # Замініть на токен вашого бота
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
