@@ -175,7 +175,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main():
-    updater = Updater("7882573984:AAEcB89h7V3uvSh9Kam6hltFkH0KTpicfZg", use_context=True)  # Замініть на токен вашого бота
+    updater = Updater("7882573984:AAGipgGCWxfcDKmnBz4N9HWGb8ZCESSCu68", use_context=True)  # Замініть на токен вашого бота
     dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
