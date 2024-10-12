@@ -180,13 +180,14 @@ def ask_next_question(update: Update, context: CallbackContext, current_feature:
     else:
         return make_prediction(update, context)
 
-# Feature Engineering
 def feature_engineering(df):
     logger.info("Выполняется feature engineering.")
-    kmeans = KMeans(n_clusters=3, random_state=42)
-    df['KMeans_Cluster'] = kmeans.fit_predict(df[['Age', 'Income']])
+    
+    # Удаляем KMeans для одного примера данных
+    # kmeans = KMeans(n_clusters=3, random_state=42)
+    # df['KMeans_Cluster'] = kmeans.fit_predict(df[['Age', 'Income']])
 
-    df = pd.get_dummies(df, columns=['KMeans_Cluster'], drop_first=True)
+    # Добавляем флаг для высокого дохода
     df['High_Income_Flag'] = np.where(df['Income'].isin([7, 8]), 1, 0)
     df['Age_BMI_Interaction'] = df['Age'] * df['BMI']
     df['BMI_Category'] = pd.cut(df['BMI'], bins=[0, 18.5, 25, 30, 100], labels=['Underweight', 'Normal', 'Overweight', 'Obesity'])
@@ -200,6 +201,7 @@ def feature_engineering(df):
     logger.info("Feature engineering завершен.")
     return df
 
+
 # Предсказание результата
 def make_prediction(update: Update, context: CallbackContext) -> int:
     if update.callback_query:
@@ -208,6 +210,12 @@ def make_prediction(update: Update, context: CallbackContext) -> int:
         chat_id = update.message.chat_id
     
     user_features = user_data[chat_id]
+    
+    # Проверяем, что количество признаков совпадает
+    if len(user_features) != len(FEATURES):
+        logger.error(f"Количество введенных пользователем данных ({len(user_features)}) не совпадает с ожидаемым количеством признаков ({len(FEATURES)}).")
+        update.callback_query.message.reply_text("Ошибка: неполные данные для предсказания.")
+        return ConversationHandler.END
     
     features_df = pd.DataFrame([user_features], columns=FEATURES)
     features_df = feature_engineering(features_df)
@@ -219,6 +227,7 @@ def make_prediction(update: Update, context: CallbackContext) -> int:
     
     user_data.pop(chat_id, None)
     return ConversationHandler.END
+
        
 # Обработка команды /cancel
 def cancel(update: Update, context: CallbackContext) -> int:
