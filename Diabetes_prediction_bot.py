@@ -216,8 +216,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main():
-    token = "7882573984:AAGf8m5T_-ImUrJ59cQSTkkPijsKwmhJjHw"
-    #os.getenv("TELEGRAM_BOT_TOKEN")
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         logger.error("Токен не найден. Проверьте переменные окружения.")
         return
