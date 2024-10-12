@@ -84,7 +84,56 @@ def button_handler(update: Update, context: CallbackContext) -> int:
         elif feature_name == 'Stroke':
             send_question(query, context, "Чи був у вас інсульт? (0 - ні, 1 - так):", ["0", "1"])
         
-        # Добавьте аналогично для остальных вопросов...
+      
+        elif feature_name == 'HighBP':
+            update.message.reply_text("Наявність гіпертонії (0 - немає, 1 - є):")
+        
+        elif feature_name == 'CholCheck':
+            update.message.reply_text("Чи робився аналіз крові на холестерин за останні 5 років(0 - ні, 1 - так):")
+
+        elif feature_name == 'HeartDiseaseorAttack':
+            update.message.reply_text("Чи був серцевий напад або серцеве захворювання (0 - ні, 1 - так):")
+        
+        elif feature_name == 'PhysActivity':
+            update.message.reply_text("Фізична активність протягом останнього місяця (0 - не було, 1 - була):")
+
+        elif feature_name == 'Fruits':
+            update.message.reply_text("Споживання фруктів принаймні раз на день (0 - ні, 1 - так):")
+        
+        elif feature_name == 'Veggies':
+            update.message.reply_text("Споживання овочів принаймні раз на день (0 - ні, 1 - так):")
+        
+        elif feature_name == 'HvyAlcoholConsump':
+            update.message.reply_text("Надмірне споживання алкоголю (0 - ні, 1 - так):")
+        
+        elif feature_name == 'AnyHealthcare':
+            update.message.reply_text("Наявність медичного страхування (0 - ні, 1 - так):")
+        
+        elif feature_name == 'NoDocbcCost':
+            update.message.reply_text("Чи пропускав візит до лікаря/не звертався до лікаря через високу вартість медичних послуг (0 - ні, 1 - так):")
+        
+        elif feature_name == 'GenHlth':
+            update.message.reply_text("Оцінка загального здоров'я на основі шкали від 1 (відмінне) до 5 (погане):")
+        
+        elif feature_name == 'MentHlth':
+            update.message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник):")
+        
+        elif feature_name == 'PhysHlth':
+            update.message.reply_text("Кількість днів за останній місяць, коли фізичне здоров'я було поганим (числовий показник):")
+        
+        elif feature_name == 'DiffWalk':
+            update.message.reply_text("Чи є труднощі з ходьбою (0 - ні, 1 - так):")
+        
+        elif feature_name == 'Sex':
+            update.message.reply_text("Стать (0 - жіноча, 1 - чоловіча):")
+        
+        elif feature_name == 'Education':
+            update.message.reply_text("Рівень освіти (шкала від 1 до 6, де 1 – відсутність освіти, 6 – вища освіта):")
+        
+        elif feature_name == 'Income':
+            update.message.reply_text("Введи рівень доходу від 1 до 8:")
+
+           
         
         return ASKING_FEATURES
     else:
