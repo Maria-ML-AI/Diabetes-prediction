@@ -186,6 +186,8 @@ def feature_engineering(df):
     # Удаляем KMeans для одного примера данных
     # kmeans = KMeans(n_clusters=3, random_state=42)
     # df['KMeans_Cluster'] = kmeans.fit_predict(df[['Age', 'Income']])
+    df['KMeans_Cluster'] = df.apply(lambda row: 1 if row['Age'] > 50 and row['Income'] < 4 else 0, axis=1)
+       
 
     # Добавляем флаг для высокого дохода
     df['High_Income_Flag'] = np.where(df['Income'].isin([7, 8]), 1, 0)
