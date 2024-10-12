@@ -196,7 +196,11 @@ def feature_engineering(df):
 
 # Предсказание результата
 def make_prediction(update: Update, context: CallbackContext) -> int:
-    chat_id = update.message.chat_id
+    if update.callback_query:
+        chat_id = update.callback_query.message.chat_id
+    else:
+        chat_id = update.message.chat_id
+    
     user_features = user_data[chat_id]
     
     features_df = pd.DataFrame([user_features], columns=FEATURES)
@@ -205,11 +209,11 @@ def make_prediction(update: Update, context: CallbackContext) -> int:
     prediction = model.predict(xgb.DMatrix(features_df))
     logger.info(f"Прогноз для пользователя {chat_id}: {prediction[0]}")
     
-    update.message.reply_text(f"Ймовірність наявності діабету: {prediction[0]}")
+    update.callback_query.message.reply_text(f"Ймовірність наявності діабету: {prediction[0]}")
     
     user_data.pop(chat_id, None)
     return ConversationHandler.END
-
+       
 # Обработка команды /cancel
 def cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text("Операцію скасовано.")
