@@ -205,6 +205,7 @@ def feature_engineering(df):
 
 
 # Предсказание результата
+# Предсказание результата
 def make_prediction(update: Update, context: CallbackContext) -> int:
     if update.callback_query:
         chat_id = update.callback_query.message.chat_id
@@ -213,22 +214,19 @@ def make_prediction(update: Update, context: CallbackContext) -> int:
     
     user_features = user_data[chat_id]
     
-    # Проверяем, что количество признаков совпадает
-    if len(user_features) != len(FEATURES):
-        logger.error(f"Количество введенных пользователем данных ({len(user_features)}) не совпадает с ожидаемым количеством признаков ({len(FEATURES)}).")
-        update.callback_query.message.reply_text("Ошибка: неполные данные для предсказания.")
-        return ConversationHandler.END
-    
     features_df = pd.DataFrame([user_features], columns=FEATURES)
     features_df = feature_engineering(features_df)
     
-    prediction = model.predict(xgb.DMatrix(features_df))
+    # Удаляем лишний вызов DMatrix, передаем DataFrame напрямую
+    prediction = model.predict(xgb.DMatrix(features_df))  # Не создавайте лишний DMatrix
+    
     logger.info(f"Прогноз для пользователя {chat_id}: {prediction[0]}")
     
     update.callback_query.message.reply_text(f"Ймовірність наявності діабету: {prediction[0]}")
     
     user_data.pop(chat_id, None)
     return ConversationHandler.END
+
 
        
 # Обработка команды /cancel
