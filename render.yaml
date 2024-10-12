@@ -1,6 +1,6 @@
 services:
   - type: worker
     name: telegram-bot
-    env: python
+    #env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python Diabetes_prediction_bot.py"
