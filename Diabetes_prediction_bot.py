@@ -28,11 +28,19 @@ user_data = {}
 
 # Загружаем модель XGBoost с обработкой ошибки
 try:
+    # Попробуйте сначала загрузить как XGBoost модель
     model = xgb.Booster()
     model.load_model('model_diabetes.pkl')
     logger.info("Модель XGBoost успешно загружена.")
 except Exception as e:
-    logger.error(f"Ошибка при загрузке модели: {str(e)}")
+    logger.error(f"Ошибка при загрузке модели XGBoost: {str(e)}")
+
+    # Если не удается загрузить как XGBoost, попробуйте как joblib
+    try:
+        model = joblib.load('model_diabetes.pkl')
+        logger.info("Модель, загруженная через joblib, успешно загружена.")
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке модели через joblib: {str(e)}")
 
 # Функция для вывода кнопок с вариантами ответов
 def send_question(update: Update, context: CallbackContext, question: str, options: list):
