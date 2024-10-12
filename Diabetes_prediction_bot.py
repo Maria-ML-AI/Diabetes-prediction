@@ -26,7 +26,7 @@ ASKING_AGE_BMI = 2
 # Глобальный словарь для хранения данных пользователя
 user_data = {}
 
-# Загружаем модель
+# Загружаем модель XGBoost с обработкой ошибки
 try:
     model = xgb.Booster()
     model.load_model('model_diabetes.pkl')
@@ -102,7 +102,22 @@ def handle_numeric_input(update: Update, context: CallbackContext) -> int:
         return ASKING_AGE_BMI
     
     user_data[chat_id].append(value)
-    return button_handler(update, context)
+    
+    # После ввода числового значения сразу переходим к следующему вопросу
+    current_feature = len(user_data[chat_id])
+    if current_feature < len(FEATURES):
+        feature_name = FEATURES[current_feature]
+        
+        if feature_name == 'Age':
+            update.message.reply_text("Введи свій вік:")
+            return ASKING_AGE_BMI
+        
+        if feature_name == 'Smoker':
+            send_question(update, context, "Чи курите ви? (0 - ні, 1 - так):", ["0", "1"])
+            return ASKING_FEATURES
+
+    else:
+        return make_prediction(update, context)
 
 def feature_engineering(df):
     logger.info("Выполняется feature engineering.")
@@ -145,7 +160,8 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main():
-    token = "7882573984:AAHJ7ZQBZGOTIDnTZnm40DrLdRMpTXE8YDU"
+       
+    token = "7882573984:AAHJ7ZQBZGOTIDnTZnm40DrLdRMpTXE8YDU" 
     #os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         logger.error("Токен не найден. Проверьте переменные окружения.")
