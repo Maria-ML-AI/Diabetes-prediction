@@ -46,7 +46,13 @@ except Exception as e:
 def send_question(update: Update, context: CallbackContext, question: str, options: list):
     keyboard = [[InlineKeyboardButton(option, callback_data=option) for option in options]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(question, reply_markup=reply_markup)
+    
+    if update.callback_query:
+        # Если это нажатие на кнопку (CallbackQuery)
+        update.callback_query.message.reply_text(question, reply_markup=reply_markup)
+    else:
+        # Если это сообщение (Message)
+        update.message.reply_text(question, reply_markup=reply_markup)
 
 # Стартовая команда
 def start(update: Update, context: CallbackContext) -> int:
