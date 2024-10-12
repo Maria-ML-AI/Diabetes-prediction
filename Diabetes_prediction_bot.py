@@ -21,7 +21,7 @@ FEATURES = ['HighBP', 'HighChol', 'CholCheck', 'BMI', 'Smoker',
 
 # Стадії для запиту фічей
 ASKING_FEATURES = 1
-ASKING_AGE_BMI = 4
+ASKING_AGE_BMI = 2
 
 # Глобальный словарь для хранения данных пользователя
 user_data = {}
@@ -62,87 +62,9 @@ def button_handler(update: Update, context: CallbackContext) -> int:
 
     # Переходим к следующему вопросу
     current_feature += 1
-    if current_feature < len(FEATURES):
-        feature_name = FEATURES[current_feature]
-        logger.info(f"Запрашиваем у пользователя {chat_id} информацию для {feature_name}.")
-        
-        if feature_name == 'BMI':
-            query.message.reply_text("Введи значення для ІМТ (вага в кг поділена на квадрат зросту в метрах):")
-            return ASKING_AGE_BMI
-        
-        elif feature_name == 'Age':
-            query.message.reply_text("Введи свій вік:")
-            return ASKING_AGE_BMI
+    return ask_next_question(update, context, current_feature)
 
-        elif feature_name == 'MentHlth':
-            query.message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник):")
-            return ASKING_AGE_BMI
-
-        elif feature_name == 'PhysHlth':
-            query.message.reply_text("Кількість днів за останній місяць, коли фізичне здоров'я було поганим (числовий показник):")
-            return ASKING_AGE_BMI
-
-           
-        # Для остальных вопросов предлагаем кнопки
-        elif feature_name == 'HighChol':
-            send_question(query, context, "Наявність високого холестерину (0 - немає, 1 - є):", ["0", "1"])
-        
-        elif feature_name == 'Smoker':
-            send_question(query, context, "Чи курите ви? (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'Stroke':
-            send_question(query, context, "Чи був у вас інсульт? (0 - ні, 1 - так):", ["0", "1"])
-        
-      
-        elif feature_name == 'HighBP':
-            send_question(query, context, "Наявність гіпертонії (0 - немає, 1 - є):", ["0", "1"])
-        
-        elif feature_name == 'CholCheck':
-            send_question(query, context, "Чи робився аналіз крові на холестерин за останні 5 років(0 - ні, 1 - так):", ["0", "1"])
-
-        elif feature_name == 'HeartDiseaseorAttack':
-            send_question(query, context, "Чи був серцевий напад або серцеве захворювання (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'PhysActivity':
-            send_question(query, context, "Фізична активність протягом останнього місяця (0 - не було, 1 - була):", ["0", "1"])
-
-        elif feature_name == 'Fruits':
-            send_question(query, context, "Споживання фруктів принаймні раз на день (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'Veggies':
-            send_question(query, context, "Споживання овочів принаймні раз на день (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'HvyAlcoholConsump':
-            send_question(query, context, "Надмірне споживання алкоголю (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'AnyHealthcare':
-            send_question(query, context, "Наявність медичного страхування (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'NoDocbcCost':
-            send_question(query, context, "Чи пропускав візит до лікаря/не звертався до лікаря через високу вартість медичних послуг (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'GenHlth':
-            send_question(query, context, "Оцінка загального здоров'я на основі шкали від 1 (відмінне) до 5 (погане):", ["1", "2", "3", "4", "5"])
-        
-        elif feature_name == 'DiffWalk':
-            send_question(query, context, "Чи є труднощі з ходьбою (0 - ні, 1 - так):", ["0", "1"])
-        
-        elif feature_name == 'Sex':
-            send_question(query, context, "Стать (0 - жіноча, 1 - чоловіча):", ["0", "1"])
-        
-        elif feature_name == 'Education':
-            send_question(query, context, "Рівень освіти (шкала від 1 до 6, де 1 – відсутність освіти, 6 – вища освіта):", ["1", "2", "3", "4", "5", "6"])
-        
-        elif feature_name == 'Income':
-            send_question(query, context, "Введи рівень доходу від 1 до 8:", ["1", "2", "3", "4", "5", "6", "7", "8"])
-
-           
-        
-        return ASKING_FEATURES
-    else:
-        return make_prediction(query, context)
-
-# Обработка ввода числовых данных
+# Обработка текстовых данных (BMI, возраст, здоровье)
 def handle_numeric_input(update: Update, context: CallbackContext) -> int:
     chat_id = update.message.chat_id
     value = update.message.text
@@ -155,22 +77,83 @@ def handle_numeric_input(update: Update, context: CallbackContext) -> int:
     
     user_data[chat_id].append(value)
     
-    # После ввода числового значения сразу переходим к следующему вопросу
+    # После ввода числового значения переходим к следующему вопросу
     current_feature = len(user_data[chat_id])
+    return ask_next_question(update, context, current_feature)
+
+# Логика для перехода к следующему вопросу
+def ask_next_question(update: Update, context: CallbackContext, current_feature: int) -> int:
+    chat_id = update.message.chat_id
+    
     if current_feature < len(FEATURES):
         feature_name = FEATURES[current_feature]
         
-        if feature_name == 'Age':
-            update.message.reply_text("Введи свій вік:")
+        if feature_name in ['BMI', 'Age', 'MentHlth', 'PhysHlth']:
+            if feature_name == 'BMI':
+                update.message.reply_text("Введи значення для ІМТ (вага в кг поділена на квадрат зросту в метрах):")
+            elif feature_name == 'Age':
+                update.message.reply_text("Введи свій вік:")
+            elif feature_name == 'MentHlth':
+                update.message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник):")
+            elif feature_name == 'PhysHlth':
+                update.message.reply_text("Кількість днів за останній місяць, коли фізичне здоров'я було поганим (числовий показник):")
             return ASKING_AGE_BMI
         
-        if feature_name == 'Smoker':
+        # Для остальных вопросов предлагаем кнопки
+        elif feature_name == 'HighChol':
+            send_question(update, context, "Наявність високого холестерину (0 - немає, 1 - є):", ["0", "1"])
+        
+        elif feature_name == 'Smoker':
             send_question(update, context, "Чи курите ви? (0 - ні, 1 - так):", ["0", "1"])
-            return ASKING_FEATURES
+        
+        elif feature_name == 'Stroke':
+            send_question(update, context, "Чи був у вас інсульт? (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'CholCheck':
+            send_question(update, context, "Чи робився аналіз крові на холестерин за останні 5 років(0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'HeartDiseaseorAttack':
+            send_question(update, context, "Чи був серцевий напад або серцеве захворювання (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'PhysActivity':
+            send_question(update, context, "Фізична активність протягом останнього місяця (0 - не було, 1 - була):", ["0", "1"])
 
+        elif feature_name == 'Fruits':
+            send_question(update, context, "Споживання фруктів принаймні раз на день (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'Veggies':
+            send_question(update, context, "Споживання овочів принаймні раз на день (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'HvyAlcoholConsump':
+            send_question(update, context, "Надмірне споживання алкоголю (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'AnyHealthcare':
+            send_question(update, context, "Наявність медичного страхування (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'NoDocbcCost':
+            send_question(update, context, "Чи пропускав візит до лікаря/не звертався до лікаря через високу вартість медичних послуг (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'GenHlth':
+            send_question(update, context, "Оцінка загального здоров'я на основі шкали від 1 (відмінне) до 5 (погане):", ["1", "2", "3", "4", "5"])
+        
+        elif feature_name == 'DiffWalk':
+            send_question(update, context, "Чи є труднощі з ходьбою (0 - ні, 1 - так):", ["0", "1"])
+        
+        elif feature_name == 'Sex':
+            send_question(update, context, "Стать (0 - жіноча, 1 - чоловіча):", ["0", "1"])
+        
+        elif feature_name == 'Education':
+            send_question(update, context, "Рівень освіти (шкала від 1 до 6, де 1 – відсутність освіти, 6 – вища освіта):", ["1", "2", "3", "4", "5", "6"])
+        
+        elif feature_name == 'Income':
+            send_question(update, context, "Введи рівень доходу від 1 до 8:", ["1", "2", "3", "4", "5", "6", "7", "8"])
+
+        return ASKING_FEATURES
+    
     else:
         return make_prediction(update, context)
 
+# Feature Engineering
 def feature_engineering(df):
     logger.info("Выполняется feature engineering.")
     kmeans = KMeans(n_clusters=3, random_state=42)
@@ -212,9 +195,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def main():
-       
-    token = "7882573984:AAHJ7ZQBZGOTIDnTZnm40DrLdRMpTXE8YDU" 
-    #os.getenv("TELEGRAM_BOT_TOKEN")
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         logger.error("Токен не найден. Проверьте переменные окружения.")
         return
