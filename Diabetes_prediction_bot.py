@@ -72,11 +72,17 @@ def button_handler(update: Update, context: CallbackContext) -> int:
     
     # Сохраняем выбранное пользователем значение
     user_data[chat_id].append(float(query.data))
+    
+    # Проверяем, есть ли еще вопросы
+    if current_feature >= len(FEATURES) - 1:
+        return make_prediction(update, context)
+    
     logger.info(f"Пользователь {chat_id} ввел значение {query.data} для {FEATURES[current_feature]}.")
 
     # Переходим к следующему вопросу
     current_feature += 1
     return ask_next_question(update, context, current_feature)
+
 
 # Обработка текстовых данных (BMI, возраст, здоровье)
 def handle_numeric_input(update: Update, context: CallbackContext) -> int:
