@@ -83,20 +83,27 @@ def handle_numeric_input(update: Update, context: CallbackContext) -> int:
 
 # Логика для перехода к следующему вопросу
 def ask_next_question(update: Update, context: CallbackContext, current_feature: int) -> int:
-    chat_id = update.message.chat_id
-    
+    if update.callback_query:
+        # Если это CallbackQuery (нажатие на кнопку)
+        chat_id = update.callback_query.message.chat_id
+        message = update.callback_query.message
+    else:
+        # Если это сообщение
+        chat_id = update.message.chat_id
+        message = update.message
+
     if current_feature < len(FEATURES):
         feature_name = FEATURES[current_feature]
         
         if feature_name in ['BMI', 'Age', 'MentHlth', 'PhysHlth']:
             if feature_name == 'BMI':
-                update.message.reply_text("Введи значення для ІМТ (вага в кг поділена на квадрат зросту в метрах):")
+                message.reply_text("Введи значення для ІМТ (вага в кг поділена на квадрат зросту в метрах):")
             elif feature_name == 'Age':
-                update.message.reply_text("Введи свій вік:")
+                message.reply_text("Введи свій вік:")
             elif feature_name == 'MentHlth':
-                update.message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник):")
+                message.reply_text("Кількість днів за останній місяць, коли психічне здоров'я було поганим (числовий показник):")
             elif feature_name == 'PhysHlth':
-                update.message.reply_text("Кількість днів за останній місяць, коли фізичне здоров'я було поганим (числовий показник):")
+                message.reply_text("Кількість днів за останній місяць, коли фізичне здоров'я було поганим (числовий показник):")
             return ASKING_AGE_BMI
         
         # Для остальных вопросов предлагаем кнопки
